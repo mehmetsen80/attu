@@ -47,7 +47,72 @@ server {
 
 This configuration sets up a proxy for Attu running on `localhost:3000` and maps it to `localhost:8080/attu/`, directing all requests to the specified location.
 
-3. Save the configuration file and exit the editor.
+3. EC2 Server
+The previous example was for localhost. You need more than attu configuration when it comes to a real EC2 (Amazon) server instance. 
+```nginx
+server {
+    listen          443 ssl;
+    server_name     linqra.com;
+
+    location /attu/ {
+        proxy_pass http://localhost:3000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Handle WebSocket connections
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Increase timeouts for long-running operations
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # Attu API calls - handle both direct and proxied access
+    location /api/v1/ {
+        proxy_pass http://localhost:3000/api/v1/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Handle WebSocket connections
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Increase timeouts for long-running operations
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # Socket.IO for Attu real-time communication
+    location /socket.io/ {
+        proxy_pass http://localhost:3000/socket.io/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Socket.IO specific headers
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Increase timeouts for long-running Socket.IO connections
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+}
+```
+
+4. Save the configuration file and exit the editor.
 
 ## Restart Nginx
 
